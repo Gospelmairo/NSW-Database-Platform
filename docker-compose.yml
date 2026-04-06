@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_DB:       nsw_platform
       POSTGRES_USER:     postgres
-      POSTGRES_PASSWORD: postgres_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5433:5432"
@@ -34,8 +34,8 @@ services:
     container_name: nsw_replica_db
     restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: postgres_dev
-      PGPASSWORD: postgres_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -66,8 +66,8 @@ services:
     container_name: nsw_pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL:    admin@nsw.gov.ng
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL:    ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -81,7 +81,7 @@ services:
     restart: unless-stopped
     working_dir: /app
     environment:
-      NSW_DB_DSN: postgresql://postgres:postgres_dev@db:5432/nsw_platform
+      NSW_DB_DSN: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/nsw_platform
     ports:
       - "8080:8080"
     volumes:

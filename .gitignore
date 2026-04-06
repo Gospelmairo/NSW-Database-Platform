@@ -1,4 +1,5 @@
 # Environment & secrets
+.env
 api-integration/.env
 *.env
 
