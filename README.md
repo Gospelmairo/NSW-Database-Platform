@@ -1,7 +1,14 @@
 # NSW Platform – Database Architecture
 
-High-availability, secure database platform powering interagency data exchange
-for Nigeria's National Single Window (NSW) system.
+## The Problem
+
+Imagine 10 different government offices — Customs, Ports, NAFDAC — all keeping their own separate records in different places. When a ship arrives with cargo, each office has to manually check with the others, call around, wait for emails. It's slow, inefficient, and creates gaps where errors or even corruption can happen.
+
+## The Solution
+
+I designed a central database system that connects all these agencies together. The moment Customs approves a cargo declaration, Ports and NAFDAC can see it instantly. Everything is in one place, updated in near real-time — improving transparency, speed, and coordination across the system.
+
+I designed and deployed a fully functional **National Single Window (NSW) Database Platform** — a high-availability system built to power real-time data exchange between Nigerian government agencies (Customs, Ports, NAFDAC, SON, NESREA).
 
 ## System Architecture
 
