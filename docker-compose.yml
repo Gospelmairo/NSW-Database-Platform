@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  # ── Primary Database ────────────────────────────────────────
+  db:
+    image: pgautoupgrade/pgautoupgrade:16-bookworm
+    container_name: nsw_primary_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       nsw_platform
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+        -c wal_level=replica
+        -c max_wal_senders=5
+        -c max_replication_slots=5
+        -c hot_standby=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nsw_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Standby Replica ─────────────────────────────────────────
+  db_replica:
+    image: pgautoupgrade/pgautoupgrade:16-bookworm
+    container_name: nsw_replica_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres_dev
+      PGPASSWORD: postgres_dev
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_replica_data:/var/lib/postgresql/data
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: >
+      bash -c "
+        if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+          echo 'Taking base backup from primary...'
+          pg_basebackup -h db -U postgres -D /var/lib/postgresql/data -Xs -R -P
+          echo 'Base backup done.'
+        fi
+        exec docker-entrypoint.sh postgres
+          -c hot_standby=on
+          -c max_standby_streaming_delay=30s
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── pgAdmin ─────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nsw_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@nsw.gov.ng
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── Dashboard ───────────────────────────────────────────────
+  dashboard:
+    image: python:3.11-slim
+    container_name: nsw_dashboard
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      NSW_DB_DSN: postgresql://postgres:postgres_dev@db:5432/nsw_platform
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    command: >
+      bash -c "pip install fastapi uvicorn psycopg2-binary python-dotenv --quiet &&
+               uvicorn dashboard.app:app --host 0.0.0.0 --port 8080 --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  pg_replica_data:

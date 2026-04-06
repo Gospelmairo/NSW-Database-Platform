@@ -1,0 +1,19 @@
+# Environment & secrets
+api-integration/.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Docker volumes
+pg_data/
+pg_replica_data/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
